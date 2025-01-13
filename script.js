@@ -32,8 +32,10 @@ function draw() {
     ctx.fillStyle = "white";
     ctx.fillRect(0,0,canvas.width,canvas.height);
     timer += speed * 0.001;
-    logIndent = 0
+    logIndent = 0;
 
+    log("Press Up and Down arrows to make things move");
+    
     shapes[1][0].x = Math.sin((Math.PI / 2) * timer) * 200;
     shapes[1][0].y = Math.cos((Math.PI / 2) * timer) * 200;
 
