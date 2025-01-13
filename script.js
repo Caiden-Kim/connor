@@ -1,8 +1,12 @@
 var timer = 0;
+var speed = 0;
+var keysDown = [];
 var logIndent = 0;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
+
+const deg = Math.PI / 180;
 
 const text = document.getElementById("text");
 
@@ -27,12 +31,8 @@ function draw() {
     //pre-draw
     ctx.fillStyle = "white";
     ctx.fillRect(0,0,canvas.width,canvas.height);
-    timer += 0.01;
+    timer += speed * 0.001;
     logIndent = 0
-    //
-    // for (let i = 0; i < shapes.length; i++) {
-    //     calcBoundingBox(shapes[i]);
-    // }
 
     shapes[1][0].x = Math.sin((Math.PI / 2) * timer) * 200;
     shapes[1][0].y = Math.cos((Math.PI / 2) * timer) * 200;
@@ -44,8 +44,8 @@ function draw() {
 
     shapes[4][0].x = Math.cos(timer / 4) * 400;
 
-    rotate(shapes[2], -Math.PI / 180);
-    rotate(shapes[1], Math.PI / 180);
+    rotate(shapes[2], (deg / 10) * speed);
+    rotate(shapes[1], (-deg / 10) * speed);
 
     for (let i = 0; i < allShapes.length; i++) {
         calcBoundingBox(allShapes[i])
@@ -165,10 +165,65 @@ function runCollisionDetection() {
                             y2:allShapes[j][0].boundingBox.y + allShapes[j][0].boundingBox.h
                         };
                         if (RectA.x < RectB.x2 && RectA.x2 > RectB.x && RectA.y < RectB.y2 && RectA.y2 > RectB.y) {
-                            log("Bounding Box Collision: " + [i,j])
+                            //log("Bounding Box Collision: " + [i,j])
+                            for (let l = 0; l < allShapes[i][1].length; l++) {
+                                for (let f = 0; f < allShapes[j][1].length; f++) {
+                                    //log(l + ", " + f);
+                                    // i -> main shape
+                                    // j -> second shape
+                                    // l -> main shape vertex index (l+1 too)
+                                    // f -> second shape vertex index (f+1 too)
+                                    
+                                    // const a1 = allShapes[i][1][l + 1].x - allShapes[i][1][l].x;
+                                    // const a2 = allShapes[i][1][l + 1].y - allShapes[i][1][l].y;
+                                    // const b1 = allShapes[j][1][0].x - allShapes[j][1][f].x;
+                                    // const b2 = allShapes[j][1][0].y - allShapes[j][1][f].y;
+                                    // const c1 = allShapes[j][1][f].x - allShapes[i][1][l].x;
+                                    // const c2 = allShapes[j][1][f].y - allShapes[i][1][l].y;
+
+                                    // const a1 = allShapes[i][1][0].x - allShapes[i][1][l].x;
+                                    // const a2 = allShapes[i][1][0].y - allShapes[i][1][l].y;
+
+                                    // const b1 = allShapes[j][1][0].x - allShapes[j][1][f].x;
+                                    // const b2 = allShapes[j][1][0].y - allShapes[j][1][f].y;
+
+                                    var a1;
+                                    var a2;
+                                    var b1;
+                                    var b2;
+                                    if (l + 1 == allShapes[i][1].length) {
+                                        a1 = allShapes[i][1][0].x - allShapes[i][1][l].x + allShapes[i][0].x;
+                                        a2 = allShapes[i][1][0].y - allShapes[i][1][l].y + allShapes[i][0].y;
+                                    } else {
+                                        a1 = allShapes[i][1][l + 1].x - allShapes[i][1][l].x + allShapes[i][0].x;
+                                        a2 = allShapes[i][1][l + 1].y - allShapes[i][1][l].y + allShapes[i][0].y;
+                                    }
+                                    if (f + 1 == allShapes[j][1].length) {
+                                        b1 = allShapes[j][1][0].x - allShapes[j][1][f].x + allShapes[j][0].x;
+                                        b2 = allShapes[j][1][0].y - allShapes[j][1][f].y + allShapes[j][0].y;
+                                    } else {
+                                        b1 = allShapes[j][1][f + 1].x - allShapes[j][1][f].x + allShapes[j][0].x;
+                                        b2 = allShapes[j][1][f + 1].y - allShapes[j][1][f].y + allShapes[j][0].y;
+                                    }
+                                    const c1 = allShapes[j][1][f].x - allShapes[i][1][l].x;
+                                    const c2 = allShapes[j][1][f].y - allShapes[i][1][l].y;
+
+                                    const s0 = (c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1);
+                                    const t0 = (a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
+                                    const x0 = allShapes[i][1][l].x + s0 * a1;
+                                    const y0 = allShapes[i][1][l].y + s0 * a2;
+                                    if (s0 > 0 && s0 < 1 && t0 > -1 && t0 < 0) {
+                                        ctx.fillStyle = "green"
+                                        ctx.beginPath();
+                                        ctx.fillRect(x0 + canvas.width / 2 - 2, y0 + canvas.height / 2 - 2, 4, 4)
+                                        ctx.stroke();
+                                        log("Box Collision: " + [i,j])
+                                    }
+                                }
+                            }
                         }
                     } else {
-
+                        
                     }
                 }
             }
@@ -202,3 +257,18 @@ function runCollisionDetection() {
         }
     }
 }
+
+document.addEventListener("keydown", (event) => {
+    if (event.code == "ArrowUp") {
+        speed = 1;
+    }
+    if (event.code == "ArrowDown") {
+        speed = -1;
+    }
+});
+
+document.addEventListener("keyup", (event) => {
+    if (event.code == "ArrowUp" || event.code == "ArrowDown") {
+        speed = 0;
+    }
+});
