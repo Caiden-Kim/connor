@@ -32,10 +32,11 @@ function draw() {
     ctx.fillStyle = "white";
     ctx.fillRect(0,0,canvas.width,canvas.height);
     timer += speed * 0.001;
-    logIndent = 0;
+    logIndent = 0
 
-    log("Press Up and Down arrows to make things move");
-    
+    log("Press W or Up Arrow to progress time forward")
+    log("Press S or Down Arrow to progress time backward")
+
     shapes[1][0].x = Math.sin((Math.PI / 2) * timer) * 200;
     shapes[1][0].y = Math.cos((Math.PI / 2) * timer) * 200;
 
@@ -207,8 +208,8 @@ function runCollisionDetection() {
                                         b1 = allShapes[j][1][f + 1].x - allShapes[j][1][f].x + allShapes[j][0].x;
                                         b2 = allShapes[j][1][f + 1].y - allShapes[j][1][f].y + allShapes[j][0].y;
                                     }
-                                    const c1 = allShapes[j][1][f].x - allShapes[i][1][l].x;
-                                    const c2 = allShapes[j][1][f].y - allShapes[i][1][l].y;
+                                    const c1 = (allShapes[j][1][f].x + allShapes[j][0].x) - (allShapes[i][1][l].x + allShapes[i][0].x);
+                                    const c2 = (allShapes[j][1][f].y + allShapes[j][0].y) - (allShapes[i][1][l].y + allShapes[i][0].y);
 
                                     const s0 = (c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1);
                                     const t0 = (a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
@@ -261,16 +262,16 @@ function runCollisionDetection() {
 }
 
 document.addEventListener("keydown", (event) => {
-    if (event.code == "ArrowUp") {
+    if (event.code == "KeyW" || event.code == "ArrowUp") {
         speed = 1;
     }
-    if (event.code == "ArrowDown") {
+    if (event.code == "KeyS" || event.code == "ArrowDown") {
         speed = -1;
     }
 });
 
 document.addEventListener("keyup", (event) => {
-    if (event.code == "ArrowUp" || event.code == "ArrowDown") {
+    if (event.code == "KeyW" || event.code == "ArrowUp" || event.code == "KeyS" || event.code == "ArrowDown") {
         speed = 0;
     }
 });
