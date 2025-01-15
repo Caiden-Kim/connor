@@ -3,6 +3,8 @@ var speed = 0;
 var keysDown = [];
 var logIndent = 0;
 
+var loadout = 1;
+
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
@@ -10,14 +12,27 @@ const deg = Math.PI / 180;
 
 const text = document.getElementById("text");
 
-var shapes = [
-    [{type:"circle",radius:25,x:-250,y:0,rot:0}],
-    [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
-    [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:0,y:-10},{x:10,y:0},{x:0,y:200},{x:-10,y:0}]],
-    [{type:"circle",radius:50,x:0,y:0,rot:0}],
-    [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:10,y:0},{x:0,y:-10},{x:-10,y:0},{x:0,y:10}]],
-    // [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:2,y:0},{x:0,y:2},{x:-2,y:0},{x:0,y:-2}]],
-];
+if (loadout == 0) {
+    var shapes = [
+        [{type:"circle",radius:25,x:-250,y:0,rot:0}],
+        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
+        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:0,y:-10},{x:10,y:0},{x:0,y:200},{x:-10,y:0}]],
+        [{type:"circle",radius:50,x:0,y:0,rot:0}],
+        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:10,y:0},{x:0,y:-10},{x:-10,y:0},{x:0,y:10}]],
+    
+        // [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:2,y:0},{x:0,y:2},{x:-2,y:0},{x:0,y:-2}]],
+    ];
+} else if (loadout == 1) {
+    var shapes = [
+        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
+        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
+        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:0,y:-10},{x:10,y:0},{x:0,y:200},{x:-10,y:0}]],
+    ];
+} else {
+
+}
+
+rotate(shapes[0], 10);
 
 var staticShapes = [
     
@@ -37,18 +52,26 @@ function draw() {
     log("Press W or Up Arrow to progress time forward")
     log("Press S or Down Arrow to progress time backward")
 
-    shapes[1][0].x = Math.sin((Math.PI / 2) * timer) * 200;
-    shapes[1][0].y = Math.cos((Math.PI / 2) * timer) * 200;
+    if (loadout == 0) {
+        shapes[1][0].x = Math.sin((Math.PI / 2) * timer) * 200;
+        shapes[1][0].y = Math.cos((Math.PI / 2) * timer) * 200;
 
-    shapes[3][0].x = Math.sin(timer / 2) * 300;
-    shapes[3][0].y = Math.cos(timer / 2) * 300;
-    
-    shapes[0][0].rot = timer;
+        shapes[3][0].x = Math.sin(timer / 2) * 300;
+        shapes[3][0].y = Math.cos(timer / 2) * 300;
+        
+        shapes[0][0].rot = timer;
 
-    shapes[4][0].x = Math.cos(timer / 4) * 400;
+        shapes[4][0].x = Math.cos(timer / 4) * 400;
 
-    rotate(shapes[2], (deg / 10) * speed);
-    rotate(shapes[1], (-deg / 10) * speed);
+        rotate(shapes[2], (deg / 10) * speed);
+        rotate(shapes[1], (-deg / 10) * speed);
+    } else if (loadout == 1) {
+        rotate(shapes[0], (deg / 10) * speed);
+        rotate(shapes[2], -0.01 * speed);
+        //shapes[1][0].x = timer * 200;
+    } else {
+
+    }
 
     for (let i = 0; i < allShapes.length; i++) {
         calcBoundingBox(allShapes[i])
