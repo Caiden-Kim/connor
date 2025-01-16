@@ -3,7 +3,7 @@ var speed = 0;
 var keysDown = [];
 var logIndent = 0;
 
-var loadout = 1;
+const loadout = 1;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -19,8 +19,6 @@ if (loadout == 0) {
         [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:0,y:-10},{x:10,y:0},{x:0,y:200},{x:-10,y:0}]],
         [{type:"circle",radius:50,x:0,y:0,rot:0}],
         [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:10,y:0},{x:0,y:-10},{x:-10,y:0},{x:0,y:10}]],
-    
-        // [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:2,y:0},{x:0,y:2},{x:-2,y:0},{x:0,y:-2}]],
     ];
 } else if (loadout == 1) {
     var shapes = [
@@ -28,19 +26,18 @@ if (loadout == 0) {
         [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
         [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:0,y:-10},{x:10,y:0},{x:0,y:200},{x:-10,y:0}]],
     ];
-} else {
-
+} else if (loadout == 2) {
+    var shapes = [
+        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
+        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
+    ];
 }
-
-rotate(shapes[0], 10);
 
 var staticShapes = [
     
 ];
 
 var allShapes = shapes.concat(staticShapes);
-
-// [[{x:400,y:0},{x:280,y:280},{x:0,y:400},{x:-280,y:280},{x:-400,y:0},{x:-280,y:-280},{x:0,y:-400},{x:280,y:-280}],{x:0,y:0,rot:0}],
 
 function draw() {
     //pre-draw
@@ -68,9 +65,10 @@ function draw() {
     } else if (loadout == 1) {
         rotate(shapes[0], (deg / 10) * speed);
         rotate(shapes[2], -0.01 * speed);
-        //shapes[1][0].x = timer * 200;
-    } else {
-
+        shapes[1][0].x = Math.sin(timer * 5) * 50;
+    } else if (loadout == 2) {
+        rotate(shapes[0], (deg / 10) * speed);
+        shapes[1][0].x = timer * 200;
     }
 
     for (let i = 0; i < allShapes.length; i++) {
@@ -194,50 +192,36 @@ function runCollisionDetection() {
                             //log("Bounding Box Collision: " + [i,j])
                             for (let l = 0; l < allShapes[i][1].length; l++) {
                                 for (let f = 0; f < allShapes[j][1].length; f++) {
-                                    //log(l + ", " + f);
                                     // i -> main shape
                                     // j -> second shape
                                     // l -> main shape vertex index (l+1 too)
                                     // f -> second shape vertex index (f+1 too)
-                                    
-                                    // const a1 = allShapes[i][1][l + 1].x - allShapes[i][1][l].x;
-                                    // const a2 = allShapes[i][1][l + 1].y - allShapes[i][1][l].y;
-                                    // const b1 = allShapes[j][1][0].x - allShapes[j][1][f].x;
-                                    // const b2 = allShapes[j][1][0].y - allShapes[j][1][f].y;
-                                    // const c1 = allShapes[j][1][f].x - allShapes[i][1][l].x;
-                                    // const c2 = allShapes[j][1][f].y - allShapes[i][1][l].y;
-
-                                    // const a1 = allShapes[i][1][0].x - allShapes[i][1][l].x;
-                                    // const a2 = allShapes[i][1][0].y - allShapes[i][1][l].y;
-
-                                    // const b1 = allShapes[j][1][0].x - allShapes[j][1][f].x;
-                                    // const b2 = allShapes[j][1][0].y - allShapes[j][1][f].y;
 
                                     var a1;
                                     var a2;
                                     var b1;
                                     var b2;
                                     if (l + 1 == allShapes[i][1].length) {
-                                        a1 = allShapes[i][1][0].x - allShapes[i][1][l].x + allShapes[i][0].x;
-                                        a2 = allShapes[i][1][0].y - allShapes[i][1][l].y + allShapes[i][0].y;
+                                        a1 = (allShapes[i][1][0].x) - (allShapes[i][1][l].x);
+                                        a2 = (allShapes[i][1][0].y) - (allShapes[i][1][l].y);
                                     } else {
-                                        a1 = allShapes[i][1][l + 1].x - allShapes[i][1][l].x + allShapes[i][0].x;
-                                        a2 = allShapes[i][1][l + 1].y - allShapes[i][1][l].y + allShapes[i][0].y;
+                                        a1 = (allShapes[i][1][l + 1].x) - (allShapes[i][1][l].x);
+                                        a2 = (allShapes[i][1][l + 1].y) - (allShapes[i][1][l].y);
                                     }
                                     if (f + 1 == allShapes[j][1].length) {
-                                        b1 = allShapes[j][1][0].x - allShapes[j][1][f].x + allShapes[j][0].x;
-                                        b2 = allShapes[j][1][0].y - allShapes[j][1][f].y + allShapes[j][0].y;
+                                        b1 = (allShapes[j][1][0].x) - (allShapes[j][1][f].x);
+                                        b2 = (allShapes[j][1][0].y) - (allShapes[j][1][f].y);
                                     } else {
-                                        b1 = allShapes[j][1][f + 1].x - allShapes[j][1][f].x + allShapes[j][0].x;
-                                        b2 = allShapes[j][1][f + 1].y - allShapes[j][1][f].y + allShapes[j][0].y;
+                                        b1 = (allShapes[j][1][f + 1].x) - (allShapes[j][1][f].x);
+                                        b2 = (allShapes[j][1][f + 1].y) - (allShapes[j][1][f].y);
                                     }
                                     const c1 = (allShapes[j][1][f].x + allShapes[j][0].x) - (allShapes[i][1][l].x + allShapes[i][0].x);
                                     const c2 = (allShapes[j][1][f].y + allShapes[j][0].y) - (allShapes[i][1][l].y + allShapes[i][0].y);
 
                                     const s0 = (c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1);
                                     const t0 = (a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
-                                    const x0 = allShapes[i][1][l].x + s0 * a1;
-                                    const y0 = allShapes[i][1][l].y + s0 * a2;
+                                    const x0 = (allShapes[i][1][l].x + allShapes[i][0].x) + s0 * a1;
+                                    const y0 = (allShapes[i][1][l].y + allShapes[i][0].y) + s0 * a2;
                                     if (s0 > 0 && s0 < 1 && t0 > -1 && t0 < 0) {
                                         ctx.fillStyle = "green"
                                         ctx.beginPath();
