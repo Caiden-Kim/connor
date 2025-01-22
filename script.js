@@ -197,24 +197,10 @@ function runCollisionDetection() {
                                     // l -> main shape vertex index (l+1 too)
                                     // f -> second shape vertex index (f+1 too)
 
-                                    var a1;
-                                    var a2;
-                                    var b1;
-                                    var b2;
-                                    if (l + 1 == allShapes[i][1].length) {
-                                        a1 = (allShapes[i][1][0].x) - (allShapes[i][1][l].x);
-                                        a2 = (allShapes[i][1][0].y) - (allShapes[i][1][l].y);
-                                    } else {
-                                        a1 = (allShapes[i][1][l + 1].x) - (allShapes[i][1][l].x);
-                                        a2 = (allShapes[i][1][l + 1].y) - (allShapes[i][1][l].y);
-                                    }
-                                    if (f + 1 == allShapes[j][1].length) {
-                                        b1 = (allShapes[j][1][0].x) - (allShapes[j][1][f].x);
-                                        b2 = (allShapes[j][1][0].y) - (allShapes[j][1][f].y);
-                                    } else {
-                                        b1 = (allShapes[j][1][f + 1].x) - (allShapes[j][1][f].x);
-                                        b2 = (allShapes[j][1][f + 1].y) - (allShapes[j][1][f].y);
-                                    }
+                                    const a1 = (allShapes[i][1][(l + 1) % (allShapes[i][1].length)].x) - (allShapes[i][1][l].x)
+                                    const a2 = (allShapes[i][1][(l + 1) % (allShapes[i][1].length)].y) - (allShapes[i][1][l].y)
+                                    const b1 = (allShapes[j][1][(f + 1) % (allShapes[j][1].length)].x) - (allShapes[j][1][f].x)
+                                    const b2 = (allShapes[j][1][(f + 1) % (allShapes[j][1].length)].y) - (allShapes[j][1][f].y)
                                     const c1 = (allShapes[j][1][f].x + allShapes[j][0].x) - (allShapes[i][1][l].x + allShapes[i][0].x);
                                     const c2 = (allShapes[j][1][f].y + allShapes[j][0].y) - (allShapes[i][1][l].y + allShapes[i][0].y);
 
