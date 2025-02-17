@@ -3,7 +3,7 @@ var speed = 0;
 var keysDown = [];
 var logIndent = 0;
 
-const loadout = 1;
+const loadout = 0;
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
@@ -43,7 +43,7 @@ function draw() {
     //pre-draw
     ctx.fillStyle = "white";
     ctx.fillRect(0,0,canvas.width,canvas.height);
-    timer += speed * 0.001;
+    timer += speed * 0.01;
     logIndent = 0
 
     log("Press W or Up Arrow to progress time forward")
@@ -171,7 +171,7 @@ function drawBoundingBox(shapeInfo) {
 
 function runCollisionDetection() {
     for (let i = 0; i < allShapes.length; i++) {
-        if (allShapes[i].length == 2) {
+        if (allShapes[i].length == 2) { // main shape is square
             var RectA = {
                 x:allShapes[i][0].boundingBox.x,
                 y:allShapes[i][0].boundingBox.y,
@@ -181,7 +181,7 @@ function runCollisionDetection() {
 
             for (let j = 0; j < allShapes.length; j++) {
                 if (i != j) {
-                    if (allShapes[j].length == 2) {
+                    if (allShapes[j].length == 2) { //both squares
                         var RectB = {
                             x:allShapes[j][0].boundingBox.x,
                             y:allShapes[j][0].boundingBox.y,
@@ -218,7 +218,7 @@ function runCollisionDetection() {
                                 }
                             }
                         }
-                    } else {
+                    } else { //main is square and second is circle
                         
                     }
                 }
@@ -232,7 +232,36 @@ function runCollisionDetection() {
                             (allShapes[i][0].y - allShapes[j][0].y) * (allShapes[i][0].y - allShapes[j][0].y)
                         )
                         if (dist <= allShapes[i][0].radius + allShapes[j][0].radius) {
-                            log("Circle-Circle Collision: " + [i,j])
+                            log("Circle-Circle Collision: " + [i,j]);
+                            const r1 = allShapes[i][0].radius;
+                            const r2 = allShapes[j][0].radius;
+
+                            const x1 = allShapes[i][0].x;
+                            const y1 = allShapes[i][0].y;
+                            const x2 = allShapes[j][0].x;
+                            const y2 = allShapes[j][0].y;
+
+                            const x0 = (r1*r1 - r2*r2 + dist*dist) / (2 * dist);
+                            const y0 = Math.sqrt(r1*r1 - x0*x0);
+
+                            var t = Math.atan((x2-x1)/(y2-y1));
+                            if (y2 < y1) {
+                                t += Math.PI;
+                            }
+                            const difAngle = Math.atan(y0/x0);
+                            const t1 = t + difAngle;
+                            const t2 = t - difAngle;
+
+                            const i1x = x1 + (Math.sin(t1) * r1);
+                            const i1y = y1 + (Math.cos(t1) * r1);
+                            const i2x = x1 + (Math.sin(t2) * r1);
+                            const i2y = y1 + (Math.cos(t2) * r1);
+
+                            ctx.fillStyle = "green"
+                            ctx.beginPath();
+                            ctx.fillRect(i1x + canvas.width / 2 - 2, i1y + canvas.height / 2 - 2, 4, 4)
+                            ctx.fillRect(i2x + canvas.width / 2 - 2, i2y + canvas.height / 2 - 2, 4, 4)
+                            ctx.stroke();
                         }
                     } else {
                         for (let l = 0; l < allShapes[j][1].length; l++) {
