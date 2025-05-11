@@ -1,299 +1,232 @@
-var timer = 0;
-var speed = 0;
-var keysDown = [];
-var logIndent = 0;
-
-const loadout = 0;
+document.body.style.overflow = 'hidden';
 
 const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
-const deg = Math.PI / 180;
+const objectData = [
+  {pos:{x:0,y:0,z:0},rot:{x:0,y:0,z:0},cull:true},
+  {pos:{x:0,y:0,z:-300},rot:{x:0,y:0,z:0},cull:true}
+];
+
+// var vertex = [[-50,-50,-50],[-50,50,-50],[50,-50,-50],[50,50,-50],[-50,-50,50],[-50,50,50],[50,-50,50],[50,50,50]]; //just cube
+const vertex = [
+  [[-25,-25,-25],[-25,25,-25],[25,-25,-25],[25,25,-25],[-25,-25,25],[-25,25,25],[25,-25,25],[25,25,25]],
+  [[-50,-50,-50],[-50,50,-50],[50,-50,-50],[50,50,-50],[-50,-50,50],[-50,50,50],[50,-50,50],[50,50,50]],
+]; //cube with extra
+// var tris = [[0,1,2,[0,255,0]],[2,1,3,[0,255,255]]]; //back face
+// var tris = [[0,2,4,[255,0,0]],[0,4,5,[255,255,0]]]; //bottom face
+// var tris = [[0,4,5,[255,255,255]],[1,3,2,[200,200,200]]] //gray and white tris
+// var tris = [[0,1,2,[0,0,105]],[1,2,3,[0,0,155]],[2,4,0,[0,0,205]],[2,6,4,[0,0,255]]] //two faces
+const objectTris = [
+  [
+    [0,1,2,[0,0,100]],
+    [1,3,2,[0,0,200]],
+    [2,4,0,[0,100,0]],
+    [2,6,4,[0,200,0]],
+    [1,4,5,[100,0,0]],
+    [1,0,4,[200,0,0]],
+    [2,3,7,[0,100,100]],
+    [2,7,6,[0,200,200]],
+    [3,1,7,[100,100,0]],
+    [5,7,1,[200,200,0]],
+    [4,7,5,[100,0,100]],
+    [4,6,7,[200,0,200]]
+  ],
+
+  [
+    [0,1,2,[0,0,150]],
+    [1,3,2,[0,0,150]],
+    [2,4,0,[0,150,0]],
+    [2,6,4,[0,150,0]],
+    [1,4,5,[150,0,0]],
+    [1,0,4,[150,0,0]],
+    [2,3,7,[0,150,150]],
+    [2,7,6,[0,150,150]],
+    [3,1,7,[150,150,0]],
+    [5,7,1,[150,150,0]],
+    [4,7,5,[150,0,150]],
+    [4,6,7,[150,0,150]]
+  ],
+];
+
+var timer = 0;
+
+const focalLength = 400;
 
 const text = document.getElementById("text");
 
-if (loadout == 0) {
-    var shapes = [
-        [{type:"circle",radius:25,x:-250,y:0,rot:0}],
-        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
-        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:0,y:-10},{x:10,y:0},{x:0,y:200},{x:-10,y:0}]],
-        [{type:"circle",radius:50,x:0,y:0,rot:0}],
-        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:10,y:0},{x:0,y:-10},{x:-10,y:0},{x:0,y:10}]],
-    ];
-} else if (loadout == 1) {
-    var shapes = [
-        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
-        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
-        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:0,y:-10},{x:10,y:0},{x:0,y:200},{x:-10,y:0}]],
-    ];
-} else if (loadout == 2) {
-    var shapes = [
-        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
-        [{type:"polygon",x:0,y:0,rot:0,boundingBox:{x:0,y:0,w:0,h:0}},[{x:50,y:50},{x:-50,y:50},{x:-50,y:-50},{x:50,y:-50}]],
-    ];
-}
+var cullID = [];
+var culledTris = [];
+var depths = [];
 
-var staticShapes = [
-    
-];
+var coords = [];
 
-var allShapes = shapes.concat(staticShapes);
+var lastUpdate = Date.now();
 
 function draw() {
-    //pre-draw
-    ctx.fillStyle = "white";
-    ctx.fillRect(0,0,canvas.width,canvas.height);
-    timer += speed * 0.01;
-    logIndent = 0
+  const now = Date.now();
+  const dt = now - lastUpdate;
+  lastUpdate = now;
 
-    log("Press W or Up Arrow to progress time forward")
-    log("Press S or Down Arrow to progress time backward")
+  timer += dt * 0.01;
 
-    if (loadout == 0) {
-        shapes[1][0].x = Math.sin((Math.PI / 2) * timer) * 200;
-        shapes[1][0].y = Math.cos((Math.PI / 2) * timer) * 200;
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        shapes[3][0].x = Math.sin(timer / 2) * 300;
-        shapes[3][0].y = Math.cos(timer / 2) * 300;
-        
-        shapes[0][0].rot = timer;
+  cullID = [];
+  culledTris = [];
+  depths = [];
+  coords = [];
+  for (let i = 0; i < vertex.length; i++) {
+    coords = coords.concat([[]]);
+  }
 
-        shapes[4][0].x = Math.cos(timer / 4) * 400;
+  //modify properties
+  objectData[0].pos.z = -timer * 4 - 100;
+  objectData[0].rot = {x:timer * 0.1,y:timer * 0.1,z:timer * 0.1};
+  
+  objectData[1].pos.x = Math.sin(timer * 0.15) * 100;
+  objectData[1].rot = {x:timer * 0.15,y:timer * 0.15,z:0};
+  //
 
-        rotate(shapes[2], (deg / 10) * speed);
-        rotate(shapes[1], (-deg / 10) * speed);
-    } else if (loadout == 1) {
-        rotate(shapes[0], (deg / 10) * speed);
-        rotate(shapes[2], -0.01 * speed);
-        shapes[1][0].x = Math.sin(timer * 5) * 50;
-    } else if (loadout == 2) {
-        rotate(shapes[0], (deg / 10) * speed);
-        shapes[1][0].x = timer * 200;
-    }
+  // what to render
+  renderObject(0);
+  renderObject(1);
+  //
 
-    for (let i = 0; i < allShapes.length; i++) {
-        calcBoundingBox(allShapes[i])
-    }
-    runCollisionDetection()
+  printScreen();
 
-    for (let i = 0; i < allShapes.length; i++) {
-        drawBoundingBox(allShapes[i])
-        drawShape(allShapes[i],i);
-    }
+  lastUpdate = Date.now();
 }
+
+function renderObject(objectIndex) {
+  const objData = objectData[objectIndex];
+  calc(objectIndex,{x:objData.pos.x,y:objData.pos.y,z:objData.pos.z},{x:objData.rot.x,y:objData.rot.y,z:objData.rot.z});
+  cullTris(objectIndex, coords[objectIndex], objectTris[objectIndex], objData.cull, true); //first is to cull, second is to order by centers
+}
+
+function printScreen() {
+  console.log(cullID)
+  console.log(culledTris)
+  console.log(depths)
+  for (let i = 0; i < culledTris.length; i++) {
+    triangle(
+    coords[cullID[i]][objectTris[cullID[i]][culledTris[i]][0]].x,
+    coords[cullID[i]][objectTris[cullID[i]][culledTris[i]][0]].y,
+    coords[cullID[i]][objectTris[cullID[i]][culledTris[i]][1]].x,
+    coords[cullID[i]][objectTris[cullID[i]][culledTris[i]][1]].y,
+    coords[cullID[i]][objectTris[cullID[i]][culledTris[i]][2]].x,
+    coords[cullID[i]][objectTris[cullID[i]][culledTris[i]][2]].y,
+    objectTris[cullID[i]][culledTris[i]][3],
+    false //for stroke
+    );
+  }
+}
+
+function triangle(x,y,x1,y1,x2,y2,color,stroke) {
+  var width = canvas.width * 0.5;
+  var height = canvas.height * 0.5;
+  ctx.beginPath();
+  ctx.moveTo(x + width,y + height);
+  ctx.lineTo(x1 + width,y1 + height);
+  ctx.lineTo(x2 + width,y2 + height);
+  ctx.fillStyle = `rgb(
+    ${color[0]}
+    ${color[1]}
+    ${color[2]}
+  )`;
+  ctx.fill();
+  ctx.lineTo(x + width,y + height);
+  if (stroke == true) {
+    ctx.strokeStyle = "white";
+  } else {
+    ctx.strokeStyle = `rgb(
+      ${color[0]}
+      ${color[1]}
+      ${color[2]}
+    )`;
+  }
+  ctx.stroke();
+}
+
+function calc(index,trans,rot) {
+  const vertices = vertex[index];
+  for (let i = 0; i < vertices.length; i++) {
+    var x = vertices[i][0];
+    var y = vertices[i][1];
+    var z = vertices[i][2];
+
+    let sin = {x:Math.sin(rot.x),y:Math.sin(rot.y),z:Math.sin(rot.z)}
+    let cos = {x:Math.cos(rot.x),y:Math.cos(rot.y),z:Math.cos(rot.z)}
+
+    var nx = x
+    var ny = y
+    var nz = z
+    //x rot
+    nx = x
+    ny = (cos.x * y) - (sin.x * z);
+    nz = (sin.x * y) + (cos.x * z);
+    //y rot
+    x = (cos.y * nx) + (sin.y * nz)
+    y = ny
+    z = (cos.y * nz) - (sin.y * nx)
+    //z rot
+    nx = (cos.z * x) - (sin.z * y);
+    ny = (sin.z * x) + (cos.z * y);
+    nz = z
+
+    //translate
+    nx += trans.x
+    ny += trans.y
+    nz += trans.z
+
+    nx *= (focalLength / nz);
+    ny *= (focalLength / nz);
+
+    coords[index] = coords[index].concat([{x:nx,y:ny,z:nz}]);
+  }
+}
+
+function cullTris(index, coords, tris, doCull, doOrder) {
+  for (let i = 0; i < tris.length; i++) {
+    var cull = 1
+    if (doCull == true) {
+      const p0 = {x:coords[tris[i][0]].x,y:coords[tris[i][0]].y};
+      const p1 = {x:coords[tris[i][1]].x,y:coords[tris[i][1]].y};
+      const p2 = {x:coords[tris[i][2]].x,y:coords[tris[i][2]].y};
+      cull = (p0.x*p1.y-p0.y*p1.x)+(p1.x*p2.y-p1.y*p2.x)+(p2.x*p0.y-p2.y*p0.x);
+    }
+    if (cull > 0) {
+      if (doOrder == true) {
+        var depth = (coords[tris[i][0]].z + coords[tris[i][1]].z + coords[tris[i][2]].z) / 3;
+        if (culledTris.length > 0) {
+          for (var j = 0; j < culledTris.length; j++) {
+            if (depth <= depths[j]) {
+              break;
+            }
+          }
+          culledTris.splice(j, 0, i);
+          depths.splice(j, 0, depth);
+          cullID.splice(j, 0, index)
+        } else {
+          culledTris = [i];
+          depths = [depth];
+          cullID = [index];
+        }
+      } else {
+        culledTris = culledTris.concat([i]);
+        cullID = cullID.concat([index])
+      }
+    }
+  }
+}
+
+function resizeWindow() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+resizeWindow();
+window.onresize = resizeWindow;
 
 setInterval(draw, 10);
-
-function drawShape(shapeInfo,i) {
-    ctx.strokeStyle = "black";
-    if (shapeInfo[0].type == "circle") {
-        ctx.beginPath();
-        ctx.arc(shapeInfo[0].x + canvas.width / 2, shapeInfo[0].y + canvas.height / 2, shapeInfo[0].radius, 0, 2 * Math.PI);
-        ctx.stroke();
-
-        ctx.beginPath();
-        ctx.moveTo(shapeInfo[0].x + canvas.width / 2, shapeInfo[0].y + canvas.height / 2);
-        var sin = Math.sin(shapeInfo[0].rot);
-        var cos = Math.cos(shapeInfo[0].rot);
-        ctx.lineTo(sin * shapeInfo[0].radius + shapeInfo[0].x + canvas.width / 2, cos * shapeInfo[0].radius + shapeInfo[0].y + canvas.height / 2);
-        ctx.stroke();
-    } else {
-        ctx.beginPath();
-        ctx.moveTo(shapeInfo[1][shapeInfo[1].length - 1].x + shapeInfo[0].x + canvas.width / 2,shapeInfo[1][shapeInfo[1].length - 1].y + shapeInfo[0].y + canvas.height / 2);
-        for (let j = 0; j < shapeInfo[1].length; j ++) {
-            ctx.lineTo(shapeInfo[1][j].x + shapeInfo[0].x + canvas.width / 2, shapeInfo[1][j].y + shapeInfo[0].y + canvas.height / 2);
-        }
-        ctx.stroke();
-    }
-    ctx.fillStyle = "blue"
-    ctx.font = "12px serif";
-    ctx.fillText(i,shapeInfo[0].x + canvas.width / 2,shapeInfo[0].y + canvas.height / 2)
-}
-
-function rotate(shapeInfo,theta) {
-    var sin = Math.sin(theta);
-    var cos = Math.cos(theta);
-    for (let j = 0; j < shapeInfo[1].length; j ++) {
-        var nx = (cos * shapeInfo[1][j].x) - (sin * shapeInfo[1][j].y);
-        var ny = (sin * shapeInfo[1][j].x) + (cos * shapeInfo[1][j].y);
-        shapeInfo[1][j].x = nx;
-        shapeInfo[1][j].y = ny;
-    }
-}
-
-function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
-window.onresize = resize;
-resize();
-
-function log(text) {
-    logIndent += 1;
-    ctx.fillStyle = "black"
-    ctx.font = "16px serif";
-    ctx.fillText(text, 2, 16 * logIndent);
-}
-
-function calcBoundingBox(shapeInfo) {
-    if (shapeInfo.length == 2) {
-        var maxX = -999;
-        var maxY = -999;
-        var minX = 999;
-        var minY = 999;
-        for (let i = 0; i < shapeInfo[1].length; i++) {
-            if (shapeInfo[1][i].x > maxX) {
-                maxX = shapeInfo[1][i].x;
-            }
-            if (shapeInfo[1][i].x < minX) {
-                minX = shapeInfo[1][i].x;
-            }
-            if (shapeInfo[1][i].y > maxY) {
-                maxY = shapeInfo[1][i].y;
-            }
-            if (shapeInfo[1][i].y < minY) {
-                minY = shapeInfo[1][i].y;
-            }
-        }
-        shapeInfo[0].boundingBox.x = minX + shapeInfo[0].x;
-        shapeInfo[0].boundingBox.y = minY + shapeInfo[0].y;
-        shapeInfo[0].boundingBox.w = maxX - minX;
-        shapeInfo[0].boundingBox.h = maxY - minY;
-    }
-}
-
-function drawBoundingBox(shapeInfo) {
-    if (shapeInfo.length == 2) {
-        ctx.strokeStyle = "red";
-        ctx.strokeRect(shapeInfo[0].boundingBox.x + canvas.width / 2,shapeInfo[0].boundingBox.y + canvas.height / 2,shapeInfo[0].boundingBox.w,shapeInfo[0].boundingBox.h)
-    }
-}
-
-function runCollisionDetection() {
-    for (let i = 0; i < allShapes.length; i++) {
-        if (allShapes[i].length == 2) { // main shape is square
-            var RectA = {
-                x:allShapes[i][0].boundingBox.x,
-                y:allShapes[i][0].boundingBox.y,
-                x2:allShapes[i][0].boundingBox.x + allShapes[i][0].boundingBox.w,
-                y2:allShapes[i][0].boundingBox.y + allShapes[i][0].boundingBox.h
-            };
-
-            for (let j = 0; j < allShapes.length; j++) {
-                if (i != j) {
-                    if (allShapes[j].length == 2) { //both squares
-                        var RectB = {
-                            x:allShapes[j][0].boundingBox.x,
-                            y:allShapes[j][0].boundingBox.y,
-                            x2:allShapes[j][0].boundingBox.x + allShapes[j][0].boundingBox.w,
-                            y2:allShapes[j][0].boundingBox.y + allShapes[j][0].boundingBox.h
-                        };
-                        if (RectA.x < RectB.x2 && RectA.x2 > RectB.x && RectA.y < RectB.y2 && RectA.y2 > RectB.y) {
-                            //log("Bounding Box Collision: " + [i,j])
-                            for (let l = 0; l < allShapes[i][1].length; l++) {
-                                for (let f = 0; f < allShapes[j][1].length; f++) {
-                                    // i -> main shape
-                                    // j -> second shape
-                                    // l -> main shape vertex index (l+1 too)
-                                    // f -> second shape vertex index (f+1 too)
-
-                                    const a1 = (allShapes[i][1][(l + 1) % (allShapes[i][1].length)].x) - (allShapes[i][1][l].x)
-                                    const a2 = (allShapes[i][1][(l + 1) % (allShapes[i][1].length)].y) - (allShapes[i][1][l].y)
-                                    const b1 = (allShapes[j][1][(f + 1) % (allShapes[j][1].length)].x) - (allShapes[j][1][f].x)
-                                    const b2 = (allShapes[j][1][(f + 1) % (allShapes[j][1].length)].y) - (allShapes[j][1][f].y)
-                                    const c1 = (allShapes[j][1][f].x + allShapes[j][0].x) - (allShapes[i][1][l].x + allShapes[i][0].x);
-                                    const c2 = (allShapes[j][1][f].y + allShapes[j][0].y) - (allShapes[i][1][l].y + allShapes[i][0].y);
-
-                                    const s0 = (c1 * b2 - c2 * b1) / (a1 * b2 - a2 * b1);
-                                    const t0 = (a1 * c2 - a2 * c1) / (a1 * b2 - a2 * b1);
-                                    const x0 = (allShapes[i][1][l].x + allShapes[i][0].x) + s0 * a1;
-                                    const y0 = (allShapes[i][1][l].y + allShapes[i][0].y) + s0 * a2;
-                                    if (s0 > 0 && s0 < 1 && t0 > -1 && t0 < 0) {
-                                        ctx.fillStyle = "green"
-                                        ctx.beginPath();
-                                        ctx.fillRect(x0 + canvas.width / 2 - 2, y0 + canvas.height / 2 - 2, 4, 4)
-                                        ctx.stroke();
-                                        log("Box Collision: " + [i,j])
-                                    }
-                                }
-                            }
-                        }
-                    } else { //main is square and second is circle
-                        
-                    }
-                }
-            }
-        } else {
-            for (let j = 0; j < allShapes.length; j++) {
-                if (i != j) {
-                    if (allShapes[j].length != 2) {
-                        var dist = Math.sqrt(
-                            (allShapes[i][0].x - allShapes[j][0].x) * (allShapes[i][0].x - allShapes[j][0].x) + 
-                            (allShapes[i][0].y - allShapes[j][0].y) * (allShapes[i][0].y - allShapes[j][0].y)
-                        )
-                        if (dist <= allShapes[i][0].radius + allShapes[j][0].radius) {
-                            log("Circle-Circle Collision: " + [i,j]);
-                            const r1 = allShapes[i][0].radius;
-                            const r2 = allShapes[j][0].radius;
-
-                            const x1 = allShapes[i][0].x;
-                            const y1 = allShapes[i][0].y;
-                            const x2 = allShapes[j][0].x;
-                            const y2 = allShapes[j][0].y;
-
-                            const x0 = (r1*r1 - r2*r2 + dist*dist) / (2 * dist);
-                            const y0 = Math.sqrt(r1*r1 - x0*x0);
-
-                            var t = Math.atan((x2-x1)/(y2-y1));
-                            if (y2 < y1) {
-                                t += Math.PI;
-                            }
-                            const difAngle = Math.atan(y0/x0);
-                            const t1 = t + difAngle;
-                            const t2 = t - difAngle;
-
-                            const i1x = x1 + (Math.sin(t1) * r1);
-                            const i1y = y1 + (Math.cos(t1) * r1);
-                            const i2x = x1 + (Math.sin(t2) * r1);
-                            const i2y = y1 + (Math.cos(t2) * r1);
-
-                            ctx.fillStyle = "green"
-                            ctx.beginPath();
-                            ctx.fillRect(i1x + canvas.width / 2 - 2, i1y + canvas.height / 2 - 2, 4, 4)
-                            ctx.fillRect(i2x + canvas.width / 2 - 2, i2y + canvas.height / 2 - 2, 4, 4)
-                            ctx.stroke();
-                        }
-                    } else {
-                        for (let l = 0; l < allShapes[j][1].length; l++) {
-                            var dist = Math.sqrt(
-                                (allShapes[i][0].x - (allShapes[j][1][l].x + allShapes[j][0].x)) * (allShapes[i][0].x - (allShapes[j][1][l].x + allShapes[j][0].x)) + 
-                                (allShapes[i][0].y - (allShapes[j][1][l].y + allShapes[j][0].y)) * (allShapes[i][0].y - (allShapes[j][1][l].y + allShapes[j][0].y))
-                            )
-                            if (dist <= allShapes[i][0].radius) {
-                                log("Circle-Polygon Collision: " + [i,j])
-                                break
-                            }
-                        }
-
-                        //detection along lines (very pro)
-                    }
-                }
-            }
-        }
-    }
-}
-
-document.addEventListener("keydown", (event) => {
-    if (event.code == "KeyW" || event.code == "ArrowUp") {
-        speed = 1;
-    }
-    if (event.code == "KeyS" || event.code == "ArrowDown") {
-        speed = -1;
-    }
-});
-
-document.addEventListener("keyup", (event) => {
-    if (event.code == "KeyW" || event.code == "ArrowUp" || event.code == "KeyS" || event.code == "ArrowDown") {
-        speed = 0;
-    }
-});
